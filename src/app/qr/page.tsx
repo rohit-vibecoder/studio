@@ -1,12 +1,31 @@
+
 'use client';
 
 import Link from 'next/link';
 import { SidebarInset } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ScanLine, Truck, Sprout } from 'lucide-react'; // Removed QrCode as ScanLine is used
+import { ScanLine, Truck, Sprout } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function QRCodeManagementPage() {
+  const { toast } = useToast();
+
+   const handleGenerateTruckClick = () => {
+    toast({ title: "Navigating", description: "Loading Generate Truck QR page..." });
+    // Navigation handled by Link component
+   };
+
+    const handleGenerateSampleClick = () => {
+        toast({ title: "Navigating", description: "Loading Generate Sample QR page..." });
+        // Navigation handled by Link component
+    };
+
+    const handleScanClick = () => {
+        toast({ title: "Navigating", description: "Loading Scan QR Code page..." });
+        // Navigation handled by Link component
+    };
+
   return (
     <SidebarInset>
       <header className="sticky top-0 z-10 flex h-[57px] items-center gap-1 border-b bg-background px-4">
@@ -23,7 +42,7 @@ export default function QRCodeManagementPage() {
              <p>Use the options below to manage QR codes for truck journeys and soil samples.</p>
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <Link href="/qr/generate/truck" passHref legacyBehavior>
-                    <Button variant="outline" className="w-full justify-start text-left h-auto py-3 shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <Button variant="outline" className="w-full justify-start text-left h-auto py-3 shadow-sm hover:shadow-md transition-shadow duration-200" onClick={handleGenerateTruckClick}>
                         <Truck className="mr-2 h-5 w-5 text-primary" />
                         <div>
                             <p className="font-semibold">Generate Truck QR</p>
@@ -32,7 +51,7 @@ export default function QRCodeManagementPage() {
                     </Button>
                  </Link>
                  <Link href="/qr/generate/sample" passHref legacyBehavior>
-                     <Button variant="outline" className="w-full justify-start text-left h-auto py-3 shadow-sm hover:shadow-md transition-shadow duration-200">
+                     <Button variant="outline" className="w-full justify-start text-left h-auto py-3 shadow-sm hover:shadow-md transition-shadow duration-200" onClick={handleGenerateSampleClick}>
                         <Sprout className="mr-2 h-5 w-5 text-primary" />
                          <div>
                             <p className="font-semibold">Generate Sample QR</p>
@@ -41,7 +60,7 @@ export default function QRCodeManagementPage() {
                      </Button>
                  </Link>
                  <Link href="/qr/scan" passHref legacyBehavior>
-                     <Button variant="accent" className="w-full justify-start text-left h-auto py-3 shadow-sm hover:shadow-md transition-shadow duration-200 col-span-1 sm:col-span-2">
+                     <Button variant="accent" className="w-full justify-start text-left h-auto py-3 shadow-sm hover:shadow-md transition-shadow duration-200 col-span-1 sm:col-span-2" onClick={handleScanClick}>
                          <ScanLine className="mr-2 h-5 w-5" />
                          <div>
                             <p className="font-semibold">Scan Existing Code</p>

@@ -11,17 +11,15 @@ import { Label } from '@/components/ui/label';
 import { Sprout, QrCode, Asterisk } from 'lucide-react';
 import { generateUniqueQRCodeData, generateFallbackCode } from '@/lib/qrcode';
 import Image from 'next/image';
+import { useToast } from '@/hooks/use-toast';
 
 export default function GenerateSampleQRPage() {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [fallbackCode, setFallbackCode] = useState<string>('');
   const [uniqueId, setUniqueId] = useState<string>('');
+  const { toast } = useToast();
 
-   useEffect(() => {
-    handleGenerate(); // Generate initial codes
-  }, []);
-
-  const handleGenerate = async () => {
+  const generateCodes = async () => {
     const newUniqueId = generateUniqueQRCodeData('sample');
     const newFallbackCode = generateFallbackCode();
     setUniqueId(newUniqueId);
@@ -39,13 +37,38 @@ export default function GenerateSampleQRPage() {
           }
       });
       setQrCodeDataUrl(url);
+      return { success: true, uniqueId: newUniqueId, fallbackCode: newFallbackCode };
     } catch (err) {
       console.error('Error generating QR code:', err);
       setQrCodeDataUrl('');
+      return { success: false, error: err };
+    }
+  };
+
+   useEffect(() => {
+    // Generate initial codes without toast
+    generateCodes();
+  }, []);
+
+  const handleGenerate = async () => {
+    toast({ title: 'Generating Codes', description: 'Creating new QR and fallback codes...' });
+    const result = await generateCodes();
+    if (result.success) {
+        toast({
+            title: 'Codes Regenerated',
+            description: `New Unique ID: ${result.uniqueId}`,
+        });
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Error Generating QR Code',
+            description: 'Could not generate QR code. Please try again.',
+        });
     }
   };
 
    const handlePrint = () => {
+     toast({ title: 'Printing', description: 'Opening print dialog...' });
      window.print();
    };
 

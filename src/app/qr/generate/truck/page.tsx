@@ -11,17 +11,15 @@ import { Label } from '@/components/ui/label';
 import { Truck, QrCode, Asterisk } from 'lucide-react';
 import { generateUniqueQRCodeData, generateFallbackCode } from '@/lib/qrcode';
 import Image from 'next/image'; // Use next/image for optimized images
+import { useToast } from '@/hooks/use-toast';
 
 export default function GenerateTruckQRPage() {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [fallbackCode, setFallbackCode] = useState<string>('');
   const [uniqueId, setUniqueId] = useState<string>('');
+  const { toast } = useToast();
 
-  useEffect(() => {
-    handleGenerate(); // Generate initial codes on component mount
-  }, []);
-
-  const handleGenerate = async () => {
+  const generateCodes = async () => {
     const newUniqueId = generateUniqueQRCodeData('truck');
     const newFallbackCode = generateFallbackCode();
     setUniqueId(newUniqueId);
@@ -39,13 +37,38 @@ export default function GenerateTruckQRPage() {
           }
       });
       setQrCodeDataUrl(url);
+      return { success: true, uniqueId: newUniqueId, fallbackCode: newFallbackCode };
     } catch (err) {
       console.error('Error generating QR code:', err);
       setQrCodeDataUrl(''); // Clear QR code on error
+      return { success: false, error: err };
     }
   };
 
+  useEffect(() => {
+    // Generate initial codes on component mount without toast
+    generateCodes();
+  }, []);
+
+  const handleGenerate = async () => {
+     toast({ title: 'Generating Codes', description: 'Creating new QR and fallback codes...' });
+     const result = await generateCodes();
+     if (result.success) {
+       toast({
+         title: 'Codes Regenerated',
+         description: `New Unique ID: ${result.uniqueId}`,
+       });
+     } else {
+        toast({
+         variant: 'destructive',
+         title: 'Error Generating QR Code',
+         description: 'Could not generate QR code. Please try again.',
+       });
+     }
+  };
+
   const handlePrint = () => {
+    toast({ title: 'Printing', description: 'Opening print dialog...' });
     // Basic print functionality - opens browser print dialog
     window.print();
     // For more advanced printing (e.g., specific element), use libraries like react-to-print
