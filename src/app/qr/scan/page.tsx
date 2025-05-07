@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -8,8 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScanLine, CameraOff, CheckCircle, AlertCircle, Loader2, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertTitle, AlertDescription as UiAlertDescription } from '@/components/ui/alert'; // Renamed to avoid conflict
 import { Separator } from '@/components/ui/separator';
+import { FormDescription } from '@/components/ui/form'; // Added import for FormDescription
 
 // Placeholder component for a real QR scanning library
 const QrScanner = ({ onScanSuccess, onScanError, active }: { onScanSuccess: (decodedText: string) => void, onScanError: (errorMessage: string) => void, active: boolean }) => {
@@ -118,9 +120,9 @@ const QrScanner = ({ onScanSuccess, onScanError, active }: { onScanSuccess: (dec
             <Alert variant="destructive" className="w-full">
                   <CameraOff className="h-5 w-5" />
                   <AlertTitle>Camera Access Required</AlertTitle>
-                  <AlertDescription>
+                  <UiAlertDescription>
                     Could not access the camera. Please check permissions or ensure a camera is connected.
-                  </AlertDescription>
+                  </UiAlertDescription>
             </Alert>
         </div>
       )}
@@ -296,13 +298,13 @@ export default function ScanQRPage() {
                  <Alert variant={processedCodeInfo.type === 'Unknown' ? 'destructive' : 'default'} className={processedCodeInfo.type !== 'Unknown' ? "bg-green-50 border-green-200" : ""}>
                    {processedCodeInfo.type === 'Unknown' ? <AlertCircle className="h-5 w-5 text-destructive-foreground" /> : <CheckCircle className="h-5 w-5 text-green-600" />}
                    <AlertTitle className={processedCodeInfo.type !== 'Unknown' ? "text-green-800" : ""}>{processedCodeInfo.type} Code Processed</AlertTitle>
-                   <AlertDescription className={processedCodeInfo.type !== 'Unknown' ? "text-green-700 space-y-2" : "space-y-2"}>
+                   <UiAlertDescription className={processedCodeInfo.type !== 'Unknown' ? "text-green-700 space-y-2" : "space-y-2"}>
                      <div>Successfully processed code: <span className="font-mono break-all bg-green-100 px-1 rounded">{processedCodeInfo.code}</span></div>
                      <p>{processedCodeInfo.message}</p>
                       <Button variant="link" size="sm" onClick={handleRescan} className={`p-0 h-auto ${processedCodeInfo.type !== 'Unknown' ? "text-green-700 hover:text-green-900" : "text-primary hover:underline"}`}>
                         Scan another code
                       </Button>
-                   </AlertDescription>
+                   </UiAlertDescription>
                  </Alert>
               )}
 
@@ -311,7 +313,7 @@ export default function ScanQRPage() {
                  <Alert variant="destructive">
                      <AlertCircle className="h-5 w-5"/>
                      <AlertTitle>Error</AlertTitle>
-                     <AlertDescription>{error}</AlertDescription>
+                     <UiAlertDescription>{error}</UiAlertDescription>
                  </Alert>
              )}
 
