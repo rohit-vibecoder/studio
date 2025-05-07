@@ -1,9 +1,8 @@
-
 'use client';
 
 import { SidebarInset } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Activity } from 'lucide-react';
+import { Activity, BarChart2, Construction } from 'lucide-react';
 
 export default function CarbonPage() {
   return (
@@ -19,9 +18,10 @@ export default function CarbonPage() {
             <CardDescription>View reports and analysis based on collected data.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>Carbon analysis reports, charts, and data visualization will be displayed here.</p>
-             <div className="mt-4 p-4 border border-dashed rounded-md text-center text-muted-foreground">
-                Carbon Analysis Reports Coming Soon
+             <div className="mt-4 p-6 border border-dashed rounded-md text-center text-muted-foreground bg-muted/50">
+                <BarChart2 className="h-12 w-12 mx-auto mb-4 text-primary" />
+                <p className="mb-2 font-semibold">Carbon Analysis Reports are Under Development</p>
+                <p className="text-sm">Comprehensive carbon analysis reports, charts, and data visualizations based on collected application and lab data will be displayed here.</p>
              </div>
           </CardContent>
         </Card>

@@ -1,9 +1,8 @@
-
 'use client';
 
 import { SidebarInset } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Truck } from 'lucide-react';
+import { Truck, Construction } from 'lucide-react';
 
 export default function ApplicationPage() {
   return (
@@ -19,9 +18,10 @@ export default function ApplicationPage() {
             <CardDescription>Track rock dust application details, equipment, and personnel.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>Forms for logging application activities and associated data will go here.</p>
-             <div className="mt-4 p-4 border border-dashed rounded-md text-center text-muted-foreground">
-                Application Logging Features Coming Soon
+             <div className="mt-4 p-6 border border-dashed rounded-md text-center text-muted-foreground bg-muted/50">
+                <Construction className="h-12 w-12 mx-auto mb-4 text-primary" />
+                <p className="mb-2 font-semibold">Application Logging Features are Under Development</p>
+                <p className="text-sm">Forms for logging application activities, equipment usage, personnel assignments, and associated data will be implemented here shortly.</p>
              </div>
           </CardContent>
         </Card>

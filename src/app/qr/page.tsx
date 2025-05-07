@@ -1,11 +1,10 @@
-
 'use client';
 
 import Link from 'next/link';
 import { SidebarInset } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ScanLine, Truck, Sprout } from 'lucide-react';
+import { ScanLine, Truck, Sprout, History, Construction } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function QRCodeManagementPage() {
@@ -69,9 +68,11 @@ export default function QRCodeManagementPage() {
                      </Button>
                  </Link>
             </div>
-              {/* Placeholder for future features like viewing history */}
+              
                <div className="mt-6 p-6 border border-dashed rounded-md text-center text-muted-foreground bg-muted/50">
-                   QR Code History & Lookup Coming Soon
+                   <History className="h-12 w-12 mx-auto mb-4 text-primary" />
+                   <p className="mb-2 font-semibold">QR Code History & Lookup is Under Development</p>
+                   <p className="text-sm">Features for viewing the history of scanned codes and looking up details associated with specific QR codes will be available here soon.</p>
                </div>
           </CardContent>
         </Card>

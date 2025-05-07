@@ -1,9 +1,8 @@
-
 'use client';
 
 import { SidebarInset } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users } from 'lucide-react';
+import { Users, Construction } from 'lucide-react';
 
 export default function UsersPage() {
   return (
@@ -19,9 +18,10 @@ export default function UsersPage() {
             <CardDescription>Add, edit, or remove user accounts and manage roles.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>User list and management tools will be available here.</p>
-             <div className="mt-4 p-4 border border-dashed rounded-md text-center text-muted-foreground">
-                User Management Interface Coming Soon
+             <div className="mt-4 p-6 border border-dashed rounded-md text-center text-muted-foreground bg-muted/50">
+                <Construction className="h-12 w-12 mx-auto mb-4 text-primary" />
+                <p className="mb-2 font-semibold">User Management Interface is Under Development</p>
+                <p className="text-sm">Tools for adding, editing, deleting user accounts, and managing user roles and permissions will be available here soon.</p>
              </div>
           </CardContent>
         </Card>

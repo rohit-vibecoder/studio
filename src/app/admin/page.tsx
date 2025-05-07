@@ -1,9 +1,8 @@
-
 'use client';
 
 import { SidebarInset } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Settings } from 'lucide-react';
+import { Settings, Construction } from 'lucide-react';
 
 export default function AdminPage() {
   return (
@@ -19,9 +18,10 @@ export default function AdminPage() {
             <CardDescription>Manage application settings and parameters.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>Admin-specific settings and configuration options will be available here.</p>
-             <div className="mt-4 p-4 border border-dashed rounded-md text-center text-muted-foreground">
-                Admin Configuration Panel Coming Soon
+            <div className="mt-4 p-6 border border-dashed rounded-md text-center text-muted-foreground bg-muted/50">
+                <Construction className="h-12 w-12 mx-auto mb-4 text-primary" />
+                <p className="mb-2 font-semibold">Admin Configuration Panel is Under Development</p>
+                <p className="text-sm">Full settings and parameter management capabilities will be available here soon. This section will allow for detailed control over application behavior.</p>
              </div>
           </CardContent>
         </Card>

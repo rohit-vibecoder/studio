@@ -1,9 +1,8 @@
-
 'use client';
 
 import { SidebarInset } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { FlaskConical } from 'lucide-react';
+import { FlaskConical, Construction } from 'lucide-react';
 
 export default function LabPage() {
   return (
@@ -19,9 +18,10 @@ export default function LabPage() {
             <CardDescription>Input analysis data for soil samples.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>Forms for entering lab analysis results linked to sample IDs.</p>
-             <div className="mt-4 p-4 border border-dashed rounded-md text-center text-muted-foreground">
-                Lab Result Entry Coming Soon
+             <div className="mt-4 p-6 border border-dashed rounded-md text-center text-muted-foreground bg-muted/50">
+                <Construction className="h-12 w-12 mx-auto mb-4 text-primary" />
+                <p className="mb-2 font-semibold">Lab Result Entry is Under Development</p>
+                <p className="text-sm">Forms for entering lab analysis results linked to sample IDs, including measurements and observations, will be available here soon.</p>
              </div>
           </CardContent>
         </Card>
