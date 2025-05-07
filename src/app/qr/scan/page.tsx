@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -7,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ScanLine, CameraOff, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { ScanLine, CameraOff, CheckCircle, AlertCircle, Loader2, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
@@ -37,7 +36,7 @@ const QrScanner = ({ onScanSuccess, onScanError, active }: { onScanSuccess: (dec
 
   const startCameraStream = useCallback(async () => {
       setIsInitializing(true);
-      setHasCameraPermission(undefined); // Reset permission state on retry
+      setHasCameraPermission(undefined); 
        if (!active) {
            stopCameraStream();
            setIsInitializing(false);
@@ -47,23 +46,27 @@ const QrScanner = ({ onScanSuccess, onScanError, active }: { onScanSuccess: (dec
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
            throw new Error('Camera API not supported by this browser.');
         }
-        // Ensure previous stream is stopped before requesting a new one
         stopCameraStream();
 
-        streamRef.current = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); // Prefer back camera
+        streamRef.current = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
         setHasCameraPermission(true);
 
         if (videoRef.current) {
           videoRef.current.srcObject = streamRef.current;
-          videoRef.current.play().catch(err => console.error("Video play failed:", err));
+          videoRef.current.play().catch(err => {
+            console.error("Video play failed:", err);
+            onScanError("Failed to play video stream.");
+          });
 
           // Simulate scanning after a delay for demo purposes
           scanTimeoutRef.current = setTimeout(() => {
-             if (!active) return; // Check if still active before calling success
-             const simulatedScanData = `simulated-${Date.now()}`;
+             if (!active || !videoRef.current || videoRef.current.paused || videoRef.current.ended) return; 
+             // Generate a more identifiable simulated code
+             const type = Math.random() > 0.5 ? 'truck' : 'sample';
+             const simulatedScanData = `${type}-${Date.now()}-SIMSCAN`;
+             console.log("Simulating scan success with data:", simulatedScanData);
              onScanSuccess(simulatedScanData);
-             // Toast is handled in the parent now
-          }, 3000); // Simulate scan after 3 seconds
+          }, 3000); 
         }
       } catch (error: any) {
         console.error('Error accessing camera:', error);
@@ -88,7 +91,7 @@ const QrScanner = ({ onScanSuccess, onScanError, active }: { onScanSuccess: (dec
           setIsInitializing(false);
       }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, onScanError, onScanSuccess, stopCameraStream, toast]);
+  }, [active, stopCameraStream, toast]); // Removed onScanError, onScanSuccess from deps to avoid re-triggering
 
 
   useEffect(() => {
@@ -97,8 +100,6 @@ const QrScanner = ({ onScanSuccess, onScanError, active }: { onScanSuccess: (dec
     } else {
       stopCameraStream();
     }
-
-     // Cleanup function
      return () => {
        stopCameraStream();
      };
@@ -106,18 +107,12 @@ const QrScanner = ({ onScanSuccess, onScanError, active }: { onScanSuccess: (dec
 
   return (
     <div className="relative aspect-video w-full max-w-md mx-auto border rounded-md overflow-hidden bg-muted shadow-inner">
-       {/* Always render video tag */}
        <video ref={videoRef} className={`w-full h-full object-cover ${!active || hasCameraPermission === false ? 'hidden' : ''}`} autoPlay muted playsInline />
-
-       {/* Overlay for visual scanning effect (optional) */}
        {active && hasCameraPermission === true && !isInitializing && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="w-2/3 h-px bg-red-500 animate-scan-line"></div>
             </div>
        )}
-
-
-      {/* Show alert only if permission is explicitly denied or on error */}
       {active && hasCameraPermission === false && !isInitializing && (
         <div className="absolute inset-0 bg-black/70 flex items-center justify-center p-4">
             <Alert variant="destructive" className="w-full">
@@ -129,22 +124,18 @@ const QrScanner = ({ onScanSuccess, onScanError, active }: { onScanSuccess: (dec
             </Alert>
         </div>
       )}
-       {/* Loading/Initializing state */}
        {active && isInitializing && (
          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white">
             <Loader2 className="h-8 w-8 animate-spin mb-2" />
             <p>Initializing Camera...</p>
          </div>
        )}
-        {/* Placeholder when inactive */}
-        {!active && !scannedData && (
+        {!active && ( // Show "Scanning Paused" or result from parent
              <div className="absolute inset-0 bg-muted flex flex-col items-center justify-center text-muted-foreground">
                  <ScanLine className="h-10 w-10 mb-2" />
-                 <p>Scanning Paused</p>
+                 <p>Scanning Paused or Complete</p>
              </div>
         )}
-
-
        <style jsx>{`
           @keyframes scan-line {
               0% { transform: translateY(-50%); opacity: 0.5; }
@@ -159,107 +150,121 @@ const QrScanner = ({ onScanSuccess, onScanError, active }: { onScanSuccess: (dec
   );
 };
 
-// Global variable to hold scanned data (for demonstration purposes)
-let scannedData: string | null = null;
 
 export default function ScanQRPage() {
-  const [currentScannedData, setCurrentScannedData] = useState<string | null>(scannedData);
+  const [processedCodeInfo, setProcessedCodeInfo] = useState<{ code: string; type: string; message: string } | null>(null);
   const [manualCode, setManualCode] = useState<string>('');
-  const [isScanning, setIsScanning] = useState(true);
+  const [isScanning, setIsScanning] = useState(true); // Start with scanning active
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // For manual submit loading
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  // Function to process the scanned/entered code
+  const identifyCodeType = (code: string): { type: string; message: string } => {
+    if (code.startsWith('truck-')) {
+      return { type: 'Truck Journey', message: 'Truck Journey code identified.' };
+    }
+    if (code.startsWith('sample-')) {
+      return { type: 'Soil Sample', message: 'Soil Sample code identified.' };
+    }
+    if (code.startsWith('manual-')) {
+      return { type: 'Manual Fallback', message: 'Manual fallback code entered.' };
+    }
+    if (code.length === 6 && /^[A-Z0-9]+$/.test(code.toUpperCase())) {
+        return { type: 'Manual Fallback (Assumed)', message: 'Assumed 6-character manual fallback code.' };
+    }
+    return { type: 'Unknown', message: 'Code format not recognized.' };
+  };
+
   const processCode = (code: string) => {
     console.log("Processing code:", code);
-    // --- TODO: Implement actual processing logic here ---
-    // 1. Validate the code format (e.g., check prefix 'truck-' or 'sample-' or manual format)
-    // 2. Look up the code in your database (Firestore, etc.)
-    // 3. Based on the type and lookup result:
-    //    - Navigate to the appropriate details page (e.g., /truck/[id], /sample/[id])
-    //    - Or display relevant information directly on this page
-    // 4. Handle cases where the code is not found or invalid
-    // -----------------------------------------------------
+    setIsLoading(true); // Show loading for processing
+    
+    const { type, message } = identifyCodeType(code);
 
-    // For now, just display success and stop scanning
-    scannedData = code; // Update global state
-    setCurrentScannedData(code);
-    setError(null);
-    setIsScanning(false);
-    setIsLoading(false);
-    toast({
-      title: 'Code Processed Successfully!',
-      description: `Code: ${code}. (Processing logic placeholder)`,
-      variant: 'default',
-    });
+    // Simulate processing delay
+    setTimeout(() => {
+      setProcessedCodeInfo({ code, type, message });
+      setError(null);
+      setIsScanning(false); // Stop scanning after successful processing
+      setIsLoading(false);
+      toast({
+        title: `${type} Code Processed`,
+        description: `Code: ${code}. ${message}`,
+        variant: type === 'Unknown' ? 'destructive' : 'default',
+      });
+
+      // TODO: Future: Navigate or fetch data based on code type and ID
+      // Example: if (type === 'Truck Journey') router.push(`/truck/${code}`);
+    }, 500);
   };
 
 
   const handleScanSuccess = (decodedText: string) => {
-    if (!isScanning) return; // Prevent processing if scanning was stopped
+    if (!isScanning) return; 
+    console.log("Scan successful:", decodedText);
+    toast({ title: "QR Code Detected!", description: "Processing code..." });
     processCode(decodedText);
   };
 
-  const handleScanError = (errorMessage: string) => {
-    if (!isScanning) return; // Ignore errors if scanning stopped
-    // Don't set general error state for camera permission issues handled by QrScanner component
-    if (!errorMessage.includes('permission') && !errorMessage.includes('camera') && !errorMessage.includes('supported')) {
+  const handleScanError = useCallback((errorMessage: string) => {
+    if (!isScanning) return; 
+    console.error("Scan error callback:", errorMessage);
+    // Avoid flooding toasts for common camera issues handled by QrScanner's UI
+    if (!errorMessage.includes('permission') && !errorMessage.includes('camera') && !errorMessage.includes('supported') && !errorMessage.includes('video play failed')) {
         setError(`Scan Error: ${errorMessage}`);
-        // Optionally toast non-permission errors
          toast({
             variant: 'destructive',
             title: 'QR Scan Error',
-            description: errorMessage.length > 50 ? 'Could not read QR code.' : errorMessage,
+            description: errorMessage.length > 100 ? 'Could not read QR code. Try manual entry.' : errorMessage,
          });
     }
-    // Keep scanning active on error unless it's a fatal camera issue
-  };
+    // Optionally, could decide to stop scanning on certain errors, but generally want to allow retry
+  }, [isScanning, toast]);
 
    const handleManualSubmit = async (e: React.FormEvent) => {
      e.preventDefault();
-     setError(null); // Clear previous errors
+     setError(null); 
      const trimmedCode = manualCode.trim().toUpperCase();
 
-     if (trimmedCode.length !== 6) {
-       setError('Manual code must be 6 characters long.');
+     if (!trimmedCode) {
+        setError('Manual code cannot be empty.');
+        toast({ variant: 'destructive', title: 'Invalid Manual Code', description: 'Please enter a code.'});
+        return;
+     }
+     // Basic validation for 6-char code if not using the "manual-" prefix internally
+     if (trimmedCode.length !== 6 && !trimmedCode.startsWith('manual-')) {
+       setError('Manual fallback code should typically be 6 characters, or ensure correct format.');
        toast({
            variant: 'destructive',
-           title: 'Invalid Manual Code',
-           description: 'Please enter a 6-character code.',
+           title: 'Invalid Manual Code Length',
+           description: 'Please enter a 6-character code or check format.',
        });
        return;
      }
-
-     setIsLoading(true);
+    
      setIsScanning(false); // Stop camera scanning when submitting manually
-
-     // Simulate API call or processing delay
-     await new Promise(resolve => setTimeout(resolve, 500));
-
-     processCode(`manual-${trimmedCode}`);
+     const codeToProcess = trimmedCode.startsWith('manual-') ? trimmedCode : `manual-${trimmedCode}`;
+     processCode(codeToProcess);
    };
 
    const handleRescan = () => {
-     scannedData = null; // Reset global state
-     setCurrentScannedData(null);
+     setProcessedCodeInfo(null);
      setError(null);
      setManualCode('');
      setIsLoading(false);
-     setIsScanning(true); // Restart scanning
+     setIsScanning(true); 
      toast({
         title: 'Ready to Scan',
         description: 'Point your camera at a new QR code.'
      })
    }
-
-   // Effect to reset component state if global scannedData is cleared elsewhere
+   
     useEffect(() => {
-        setCurrentScannedData(scannedData);
-        if (!scannedData) {
-            setIsScanning(true); // Ensure scanning is active if no data is set
+        // If there's processed code, ensure scanning is off.
+        if (processedCodeInfo) {
+            setIsScanning(false);
         }
-    }, []);
+    }, [processedCodeInfo]);
 
 
   return (
@@ -272,11 +277,11 @@ export default function ScanQRPage() {
         <Card>
           <CardHeader>
             <CardTitle>Scan or Enter Code</CardTitle>
-            <CardDescription>Scan a QR code using your device camera or enter the 6-character fallback code manually.</CardDescription>
+            <CardDescription>Scan a QR code using your device camera or enter the fallback code manually.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
 
-            {!currentScannedData && (
+            {!processedCodeInfo && (
                <>
                  {isScanning && <p className="text-center text-sm text-muted-foreground">Point your camera at the QR code.</p>}
                  <QrScanner
@@ -287,15 +292,14 @@ export default function ScanQRPage() {
                </>
             )}
 
-             {currentScannedData && (
-                 <Alert variant="default" className="bg-green-50 border-green-200">
-                   <CheckCircle className="h-5 w-5 text-green-600" />
-                   <AlertTitle className="text-green-800">Code Processed</AlertTitle>
-                   <AlertDescription className="text-green-700 space-y-2">
-                     <div>Successfully processed code: <span className="font-mono break-all bg-green-100 px-1 rounded">{currentScannedData}</span></div>
-                      {/* Add button to trigger actual action based on the code */}
-                      {/* <Button size="sm" className="mt-2">View Details</Button> */}
-                      <Button variant="link" size="sm" onClick={handleRescan} className="p-0 h-auto text-green-700 hover:text-green-900">
+             {processedCodeInfo && (
+                 <Alert variant={processedCodeInfo.type === 'Unknown' ? 'destructive' : 'default'} className={processedCodeInfo.type !== 'Unknown' ? "bg-green-50 border-green-200" : ""}>
+                   {processedCodeInfo.type === 'Unknown' ? <AlertCircle className="h-5 w-5 text-destructive-foreground" /> : <CheckCircle className="h-5 w-5 text-green-600" />}
+                   <AlertTitle className={processedCodeInfo.type !== 'Unknown' ? "text-green-800" : ""}>{processedCodeInfo.type} Code Processed</AlertTitle>
+                   <AlertDescription className={processedCodeInfo.type !== 'Unknown' ? "text-green-700 space-y-2" : "space-y-2"}>
+                     <div>Successfully processed code: <span className="font-mono break-all bg-green-100 px-1 rounded">{processedCodeInfo.code}</span></div>
+                     <p>{processedCodeInfo.message}</p>
+                      <Button variant="link" size="sm" onClick={handleRescan} className={`p-0 h-auto ${processedCodeInfo.type !== 'Unknown' ? "text-green-700 hover:text-green-900" : "text-primary hover:underline"}`}>
                         Scan another code
                       </Button>
                    </AlertDescription>
@@ -303,7 +307,7 @@ export default function ScanQRPage() {
               )}
 
 
-             {!currentScannedData && error && (
+             {!processedCodeInfo && error && !isScanning && ( // Show general errors only if not actively scanning and no success
                  <Alert variant="destructive">
                      <AlertCircle className="h-5 w-5"/>
                      <AlertTitle>Error</AlertTitle>
@@ -311,37 +315,43 @@ export default function ScanQRPage() {
                  </Alert>
              )}
 
-             {/* Show rescan button if an error occurred AND we are not actively scanning */}
-             {!isScanning && !currentScannedData && (
-                  <Button onClick={handleRescan} variant="outline">
+             {/* Show rescan button if an error occurred OR if scanning is paused but no code processed yet */}
+             {!isScanning && !processedCodeInfo && (
+                  <Button onClick={handleRescan} variant="outline" className="w-full sm:w-auto">
                      <ScanLine className="mr-2 h-4 w-4" /> Retry Scan
                   </Button>
              )}
+             {isLoading && !processedCodeInfo && (
+                <div className="flex items-center justify-center p-4">
+                    <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary" />
+                    <p className="text-muted-foreground">Processing code...</p>
+                </div>
+             )}
 
 
-             <div className="relative">
+             <div className="relative pt-4">
                 <Separator />
                 <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-sm text-muted-foreground">OR</span>
              </div>
 
 
-            <form onSubmit={handleManualSubmit} className="space-y-4">
+            <form onSubmit={handleManualSubmit} className="space-y-4 pt-4">
                <div className="space-y-2">
-                <Label htmlFor="manualCode">Enter 6-Character Fallback Code</Label>
+                <Label htmlFor="manualCode">Enter Fallback Code</Label>
                 <Input
                     id="manualCode"
                     value={manualCode}
                     onChange={(e) => setManualCode(e.target.value)}
-                    maxLength={6}
-                    placeholder="ABCXYZ"
-                    className="text-center font-mono text-lg tracking-widest uppercase"
-                    disabled={!!currentScannedData || isLoading} // Disable if scan was successful or loading
+                    placeholder="e.g., ABCXYZ or full ID"
+                    className="text-center font-mono text-lg tracking-widest"
+                    disabled={!!processedCodeInfo || isLoading} 
                     autoCapitalize="characters"
                     autoComplete="off"
                     autoCorrect="off"
                 />
+                <FormDescription className="text-xs text-center">Enter the 6-character code or the full unique ID.</FormDescription>
                </div>
-               <Button type="submit" className="w-full sm:w-auto" disabled={!!currentScannedData || isLoading || manualCode.trim().length !== 6}>
+               <Button type="submit" className="w-full sm:w-auto" disabled={!!processedCodeInfo || isLoading || !manualCode.trim()}>
                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                    {isLoading ? 'Processing...' : 'Submit Manual Code'}
                </Button>

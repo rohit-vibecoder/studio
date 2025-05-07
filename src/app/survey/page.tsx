@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -6,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { CalendarIcon, ClipboardList, MapPin, Sun, Droplets, TestTube2, Leaf, Camera, StickyNote, Save } from 'lucide-react';
+import { CalendarIcon, ClipboardList, MapPin, Sun, Droplets, TestTube2, Leaf, Camera, StickyNote, Save, Upload } from 'lucide-react'; // Added Upload icon
 
 import { SidebarInset } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -22,7 +21,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label'; // Added missing import
+import { Label } from '@/components/ui/label';
 import {
   Popover,
   PopoverContent,
@@ -54,6 +53,7 @@ const fieldSurveySchema = z.object({
   weatherConditions: z.string().optional(),
   soilMoisture: z.number().min(0).max(100).default(50), // Percentage or scale 0-100
   phMeasurement: z.coerce.number().min(0).max(14).optional(),
+  photos: z.custom<FileList | null>().optional(), // For file input
   notes: z.string().optional(),
 });
 
@@ -61,6 +61,8 @@ type FieldSurveyFormValues = z.infer<typeof fieldSurveySchema>;
 
 export default function SurveyPage() {
   const { toast } = useToast();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [selectedFilesCount, setSelectedFilesCount] = React.useState(0);
 
   const form = useForm<FieldSurveyFormValues>({
     resolver: zodResolver(fieldSurveySchema),
@@ -76,20 +78,38 @@ export default function SurveyPage() {
       weatherConditions: '',
       soilMoisture: 50,
       phMeasurement: undefined,
+      photos: null,
       notes: '',
     },
   });
 
   function onSubmit(data: FieldSurveyFormValues) {
-    console.log('Field Survey Data Submitted:', data);
+    // In a real app, you'd handle file uploads here, e.g., to Firebase Storage
+    const formDataToSubmit = { ...data };
+    if (data.photos && data.photos.length > 0) {
+      console.log(`Selected ${data.photos.length} files:`);
+      Array.from(data.photos).forEach(file => console.log(file.name));
+      // Remove FileList from data before generic logging if it's not serializable for some backend
+      // delete formDataToSubmit.photos; // Or handle appropriately
+    } else {
+       console.log('No photos selected.');
+    }
+
+
+    console.log('Field Survey Data Submitted:', formDataToSubmit);
     toast({
       title: 'Survey Submitted Successfully',
-      description: `Survey ID: ${data.surveyId}`,
+      description: (
+        <div>
+          <p>Survey ID: {data.surveyId}</p>
+          {data.photos && data.photos.length > 0 && <p>{data.photos.length} photo(s) recorded (names logged in console).</p>}
+        </div>
+      )
     });
-    // Reset form or navigate away after submission
+    // Reset form
      form.reset({
-        surveyId: `SURVEY-${Date.now() + 1}`, // Generate new default ID
-        surveyDate: undefined, // Reset date
+        surveyId: `SURVEY-${Date.now() + 1}`, 
+        surveyDate: undefined, 
         surveyorName: '',
         latitude: undefined,
         longitude: undefined,
@@ -100,9 +120,33 @@ export default function SurveyPage() {
         weatherConditions: '',
         soilMoisture: 50,
         phMeasurement: undefined,
+        photos: null,
         notes: '',
      });
+     setSelectedFilesCount(0);
+     if (fileInputRef.current) {
+        fileInputRef.current.value = ''; // Clear file input
+     }
   }
+
+  const handlePhotoUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      form.setValue('photos', files); // Update react-hook-form state
+      setSelectedFilesCount(files.length);
+      toast({
+        title: `${files.length} Photo(s) Selected`,
+        description: Array.from(files).map(f => f.name).join(', '),
+      });
+    } else {
+      form.setValue('photos', null);
+      setSelectedFilesCount(0);
+    }
+  };
 
   return (
     <SidebarInset>
@@ -195,7 +239,7 @@ export default function SurveyPage() {
                         )}
                     />
 
-                     {/* Placeholder for GPS */}
+                     {/* Location (GPS) */}
                       <Card className="md:col-span-2 p-4 bg-secondary/50 border border-dashed">
                         <CardHeader className="p-0 pb-2">
                            <CardTitle className="text-base flex items-center"><MapPin className="mr-2 h-4 w-4" /> Location (GPS)</CardTitle>
@@ -227,7 +271,6 @@ export default function SurveyPage() {
                                 </FormItem>
                                 )}
                             />
-                            {/* Future: Could add a button to 'Get Current Location' */}
                         </CardContent>
                     </Card>
 
@@ -270,7 +313,7 @@ export default function SurveyPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="flex items-center"><TestTube2 className="mr-2 h-4 w-4" /> Soil Type</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value || ''} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select soil type" />
@@ -298,7 +341,7 @@ export default function SurveyPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="flex items-center"><Leaf className="mr-2 h-4 w-4" /> Vegetation Cover</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value || ''} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select vegetation cover" />
@@ -341,7 +384,7 @@ export default function SurveyPage() {
                                 <FormControl>
                                     <Slider
                                         defaultValue={[50]}
-                                        value={[value]}
+                                        value={[value || 50]} // Ensure value is always an array for Slider
                                         max={100}
                                         step={1}
                                         onValueChange={(vals) => onChange(vals[0])}
@@ -362,21 +405,39 @@ export default function SurveyPage() {
                             <FormItem>
                                 <FormLabel className="flex items-center"><TestTube2 className="mr-2 h-4 w-4" /> pH Measurement (Optional)</FormLabel>
                                 <FormControl>
-                                    <Input type="number" step="0.1" placeholder="e.g., 6.5" {...field} />
+                                    <Input type="number" step="0.1" placeholder="e.g., 6.5" {...field} value={field.value ?? ''} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
 
-                    {/* Photos Placeholder */}
-                    <div className="md:col-span-2">
-                         <Label className="flex items-center"><Camera className="mr-2 h-4 w-4" /> Photos (Optional)</Label>
-                         <Button type="button" variant="outline" className="w-full mt-2" disabled>
-                           Upload Photos (Feature Coming Soon)
-                         </Button>
-                         <p className="text-sm text-muted-foreground mt-1">Attach relevant site photos.</p>
-                    </div>
+                    {/* Photos Field */}
+                    <FormField
+                        control={form.control}
+                        name="photos"
+                        render={() => ( // field not directly used for hidden input, managed by ref
+                            <FormItem className="md:col-span-2">
+                                <FormLabel className="flex items-center"><Camera className="mr-2 h-4 w-4" /> Photos ({selectedFilesCount} selected)</FormLabel>
+                                <FormControl>
+                                    <Input 
+                                        type="file" 
+                                        ref={fileInputRef} 
+                                        className="hidden" 
+                                        onChange={handleFileChange}
+                                        accept="image/*"
+                                        multiple 
+                                    />
+                                </FormControl>
+                                <Button type="button" variant="outline" className="w-full mt-2" onClick={handlePhotoUploadClick}>
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    {selectedFilesCount > 0 ? `Change ${selectedFilesCount} Photo(s)` : 'Upload Photos'}
+                                </Button>
+                                <FormDescription>Attach relevant site photos. Actual upload occurs on form submission.</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
 
                      {/* Notes */}
